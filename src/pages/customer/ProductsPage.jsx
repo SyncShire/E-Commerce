@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Filter, ChevronLeft, ChevronRight, X } from 'lucide-react'; // Added X icon
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -188,12 +188,21 @@ const ProductsPage = () => {
 
           <div className="grid lg:grid-cols-4 gap-8">
             {/* Filters Sidebar */}
-            <aside className={`lg:block ${filterOpen ? 'block' : 'hidden'} bg-white p-6 rounded-2xl h-fit sticky top-24 shadow-sm border border-gray-100`}>
+            {/* Changed z-index and fixed positioning logic for mobile overlay */}
+            <aside className={`
+            fixed inset-0 z-50 bg-white p-6 overflow-y-auto transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 lg:block lg:h-fit lg:bg-transparent lg:p-6 lg:rounded-2xl lg:shadow-sm lg:border lg:border-gray-100 lg:sticky lg:top-24
+            ${filterOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          `}>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-bold text-lg text-gray-900">Filters</h2>
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-blue-900 hover:text-blue-700">
-                  Clear All
-                </Button>
+                <div className="flex items-center gap-4">
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="text-blue-900 hover:text-blue-700">
+                    Clear All
+                  </Button>
+                  <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setFilterOpen(false)}>
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
 
               {/* Gender Filter */}
@@ -295,12 +304,21 @@ const ProductsPage = () => {
                   ))}
                 </div>
               </div>
+
+              <Button className="w-full lg:hidden mt-4 bg-blue-900 text-white" onClick={() => setFilterOpen(false)}>
+                Show Results
+              </Button>
             </aside>
+
+            {/* Overlay for mobile filters */}
+            {filterOpen && (
+                <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setFilterOpen(false)} />
+            )}
 
             {/* Products Grid */}
             <div className="lg:col-span-3">
               {loading ? (
-                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6"> {/* Updated grid-cols-1 to grid-cols-2 */}
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[...Array(6)].map((_, i) => (
                         <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse border border-gray-100">
                           <div className="aspect-square bg-gray-200"></div>
@@ -318,7 +336,7 @@ const ProductsPage = () => {
                   </div>
               ) : (
                   <>
-                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6"> {/* Updated grid-cols-1 to grid-cols-2 */}
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {products.map((product, index) => (
                           <motion.div
                               key={product.id}
