@@ -15,16 +15,15 @@ export const SupabaseAuthProvider = ({ children }) => {
   const fetchProfile = async (userId) => {
     try {
       const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
+          .from('users')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
       if (!error && data) {
         setUserProfile(data);
       } else {
         console.error('Error fetching profile:', error);
-        // Fallback or retry logic could go here
       }
     } catch (error) {
       console.error('Error in fetchProfile:', error);
@@ -35,13 +34,13 @@ export const SupabaseAuthProvider = ({ children }) => {
     setSession(currentSession);
     const currentUser = currentSession?.user ?? null;
     setUser(currentUser);
-    
+
     if (currentUser) {
       await fetchProfile(currentUser.id);
     } else {
       setUserProfile(null);
     }
-    
+
     setLoading(false);
   }, []);
 
@@ -54,13 +53,13 @@ export const SupabaseAuthProvider = ({ children }) => {
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-           handleSession(session);
-        } else if (event === 'SIGNED_OUT') {
-           handleSession(null);
+        async (event, session) => {
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            handleSession(session);
+          } else if (event === 'SIGNED_OUT') {
+            handleSession(null);
+          }
         }
-      }
     );
 
     return () => subscription.unsubscribe();
@@ -72,19 +71,18 @@ export const SupabaseAuthProvider = ({ children }) => {
       password,
       options: {
         data: metadata, // metadata like full_name and role_type passed here
+        emailRedirectTo: `${window.location.origin}/login`
       },
     });
 
     if (error) {
-      toast({
-        variant: "destructive",
-        title: "Sign up Failed",
-        description: error.message || "Something went wrong",
-      });
+      // Let the component handle specific UI messaging for better UX,
+      // but log it here for debugging.
+      console.error("Context SignUp Error:", error);
     }
 
     return { data, error };
-  }, [toast]);
+  }, []);
 
   const signIn = useCallback(async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -93,10 +91,7 @@ export const SupabaseAuthProvider = ({ children }) => {
     });
 
     if (error) {
-      // We don't toast here immediately because sometimes we catch errors for custom logic (like auto-create admin)
-      // The caller handles the error UI often, or we can toast if it's a generic error.
-      // For now, let's return the error and let the component decide, or toast if it's critical.
-      console.error("Sign in error:", error.message);
+      console.error("Context SignIn Error:", error.message);
     }
 
     return { data, error };
@@ -106,9 +101,15 @@ export const SupabaseAuthProvider = ({ children }) => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Sign out Failed",
         description: error.message || "Something went wrong",
+      });
+    } else {
+      toast({
+        variant: "success",
+        title: "Signed Out",
+        description: "You have been signed out successfully.",
       });
     }
     setUser(null);
@@ -119,7 +120,7 @@ export const SupabaseAuthProvider = ({ children }) => {
 
   const value = useMemo(() => ({
     user,
-    userProfile, // Contains role_type now
+    userProfile,
     session,
     loading,
     signUp,
